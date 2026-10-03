@@ -5,7 +5,7 @@
 
 ## Architecture in one picture
 
-```
+```text
 WeChat App ⇄ OpenClaw Gateway (openclaw-weixin channel)
               │ message:received
               ▼

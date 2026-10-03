@@ -5,7 +5,7 @@
 
 ## 一句话架构
 
-```
+```text
 微信 App ⇄ OpenClaw Gateway（openclaw-weixin 通道）
              │ message:received
              ▼

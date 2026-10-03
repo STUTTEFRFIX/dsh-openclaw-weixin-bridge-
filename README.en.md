@@ -53,7 +53,7 @@ npm test
 # 3. Deploy the OpenClaw hook pack (idempotent; -DryRun / --dry-run to preview)
 pwsh -File .\deploy.ps1          # Windows
 ./deploy.sh                      # Linux / macOS / WSL
-```
+```text
 
 Then supply `DSH_BRIDGE_URL` and `DSH_BRIDGE_SECRET` (environment or the sidecar
 file `~/.openclaw/dsh-bridge-hook.json`), install the DSH-side Cordis plugin
@@ -63,7 +63,7 @@ Detailed steps: [docs/en/installation.md](docs/en/installation.md).
 
 ## Repository layout
 
-```
+```text
 README.md / README.en.md      bilingual overview (this file)
 STATUS.md                     testing status + release rules (use `git archive`)
 PROJECT-STRUCTURE.md          per-file structure guide (zh) / docs/en/project-structure.md
@@ -74,7 +74,7 @@ packages/                     openclaw-weixin-runtime-fix (unsupported local pat
 config/                       placeholder samples (*.local.* are gitignored)
 scripts/                      syntax, config, hygiene and docs gates + session tooling
 docs/zh-CN/, docs/en/         user documentation, page-for-page bilingual
-```
+```text
 
 Full detail: [docs/en/project-structure.md](docs/en/project-structure.md).
 
