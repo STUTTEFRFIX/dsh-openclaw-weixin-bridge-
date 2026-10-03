@@ -1,0 +1,19 @@
+{
+  // 部署口径 (b)：把 OpenClaw 的 hooks.internal.load.extraDirs 指向**仓库里的 hook pack**，
+  // 让「git 追踪的那份」就是「实际加载的那份」，根治仓库与线上漂移。
+  //
+  // 本文件是**样例**，只含占位符：
+  //   - `<repo>` 替换成你克隆仓库的绝对路径（Windows 用双反斜杠或正斜杠）；
+  //   - 本机真实值请写进 .gitignore 排除的 `config/deploy-extraDirs.patch.local.json5`；
+  //   - 合并进 `<stateDir>/openclaw.json` 的 `hooks.internal.load.extraDirs` 后重启 Gateway 生效。
+  //
+  // 注意：extraDirs 会让 hook 发现变成「开放式」，并且被链接的 hook 代码是**本机受信任代码**；
+  // 只指向你自己克隆/审阅过的目录。
+  hooks: {
+    internal: {
+      load: {
+        extraDirs: ["<repo>/plugins/openclaw-hook-dsh-bridge"],
+      },
+    },
+  },
+}

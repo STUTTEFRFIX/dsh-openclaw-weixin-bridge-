@@ -1,0 +1,51 @@
+# dsh-webhook-bridge — bundle 层
+#
+# 本文件由 DSH 的 profile 组合机制加载（`dsh.bundle.patch` 指向它）。
+# 它把本包作为一行 Cordis 插件插入运行树；config 中的路径/白名单等请按你的环境修改。
+#
+# 依赖：需同时加载 `@deepseek-ai/dsh-webhook`（提供 ctx.webhookRuntime）。
+- insert:
+    - id: webhook-bridge
+      name: dsh-webhook-bridge
+      config:
+        # 精确 POST 路由（必须是以 / 开头的非根路径，且无结尾斜杠/查询/片段）
+        path: /openclaw-wechat
+        # 桥接实例名，进入投递来源标识
+        source: openclaw-wechat
+        # 共享密钥来源（优先级）：$env:DSH_BRIDGE_SECRET_FILE 指向的文件 → 本项 secretFile → $env:DSH_BRIDGE_SECRET。
+        # 本文件是**包内模板**，刻意不含机器专属路径：
+        #   - secretFile 留空 => 部署时用 DSH_BRIDGE_SECRET_FILE 指定，或把密钥放进 <stateDir>/bridge-secret.txt；
+        #   - 本机真实值请写进 .gitignore 排除的本地覆盖文件 config/dsh-webhook-bridge.patch.local.yml，
+        #     部署/合并时再覆盖到 profile 的 cordis.patch.yml（profile 里的那份才是运行时生效的配置）。
+        secretFile: ''
+        secretEnv: DSH_BRIDGE_SECRET
+        # 允许创建会话的工作区根目录（请求里的 workspacePath 必须落在其内，且必须已存在）
+        # 占位符 —— 部署时替换为真实目录（本机值同样放进上面的本地覆盖文件）。
+        workspaceRoot: '<workspace-root>'
+        # 权限档位：read-only | workspace-write | danger-full-access
+        permissionPreset: workspace-write
+        # agent preset id：standard | minimal | ptc | cordis
+        agentPreset: standard
+        # 调用者白名单：留空表示不校验 sender（生产环境建议填）
+        allowSenders: []
+        # 请求体上限（字节）
+        maxBodyBytes: 65536
+        # 派发后确认"会话确实建成"的最长等待（毫秒）；超时返回 502
+        confirmTimeoutMs: 5000
+        # 请求带 wait:true 时等待本轮完成的最长时限（毫秒）；超时返回 504
+        waitTimeoutMs: 120000
+        # 会话亲和窗口（毫秒）：同一 conversationId/sender 在该窗口内归属同一会话边界；
+        # 上一轮仍在跑时合并进下一次派发（不新建会话），窗口过期则新建并写日志。
+        affinityWindowMs: 900000
+        # 节流（毫秒）：距上次派发不足该值的新消息并入下一次派发
+        minIntervalMs: 1500
+        # 一次派发最多合并多少段消息 / 合并文本字符上限
+        maxFragments: 20
+        maxMergedChars: 8000
+        # 判定 needs_input 的工具名（这些工具在等用户回答时回合不结束，立即回传编号选项）
+        questionTools: ['ask_user_question']
+        # 中继模式：把 text 直接作为新会话 prompt
+        relay: true
+        # 诊断日志文件；留空则不写
+        logFile: ''
+        diagnostic: false

@@ -1,0 +1,31 @@
+{
+  "name": "openclaw-hook-dsh-bridge",
+  "version": "0.1.0",
+  "description": "OpenClaw 内部 hook（hook pack）：把微信通道入站消息转发到 DSH 的 webhook 桥接端点。",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "openclaw": {
+    "hooks": [
+      "."
+    ]
+  },
+  "files": [
+    "HOOK.md",
+    "handler.js",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test-handler.mjs && node test/self-test.mjs"
+  },
+  "keywords": [
+    "openclaw",
+    "hook",
+    "weixin",
+    "wechat",
+    "dsh",
+    "bridge"
+  ]
+}

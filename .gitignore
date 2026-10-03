@@ -1,0 +1,21 @@
+# 密钥与本地状态：一律不要提交
+*.orig-bak
+dsh-bridge-hook.json
+bridge-secret.txt
+*.secret
+*.secret.txt
+.env
+.env.*
+config/*.local.*
+config/*.real.*
+
+# 依赖与构建产物
+node_modules/
+dist/
+coverage/
+*.tgz
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+*.log

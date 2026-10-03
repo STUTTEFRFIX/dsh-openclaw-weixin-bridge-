@@ -1,0 +1,24 @@
+{
+  "name": "openclaw-weixin-runtime-fix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenClaw 微信通道运行时修复包：修补 worker-task-pool 的结构化克隆失败（DataCloneError）导致「消息可收不可回」的问题。",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "test": "node test/verify-clone-fix.mjs",
+    "test:gate": "pwsh -NoProfile -File test/apply-gate-test.ps1",
+    "targets": "node lib/targets.mjs",
+    "gen": "node lib/gen-patch.mjs"
+  },
+  "keywords": [
+    "openclaw",
+    "weixin",
+    "worker-task-pool",
+    "DataCloneError",
+    "runtime-fix"
+  ]
+}

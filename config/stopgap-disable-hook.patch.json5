@@ -1,0 +1,14 @@
+{
+  // 显式登记并关闭新版 hook（hookKey = dsh-bridge）。
+  // 背景：extraDirs 存在时宿主为开放式发现，旧条目 dsh-bridge-forward 约束不到
+  // 新版 hook 名（dsh-bridge），因此必须按新名字显式关闭，止血才真正生效。
+  hooks: {
+    internal: {
+      entries: {
+        "dsh-bridge": {
+          enabled: false,
+        },
+      },
+    },
+  },
+}

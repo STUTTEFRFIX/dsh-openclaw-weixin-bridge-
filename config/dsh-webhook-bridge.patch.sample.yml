@@ -1,0 +1,51 @@
+# dsh-webhook-bridge —— DSH 侧 Cordis 插件配置样例（**全部为占位符**）
+#
+# 用法：把下面的 insert 行合并进你的 DSH profile 组合文件（即仓库里
+# plugins/dsh-webhook-bridge/cordis.patch.yml 的同名结构），再把占位符替换成你的真实值。
+# 键名与顺序都刻意与 plugins/dsh-webhook-bridge/cordis.patch.yml 保持一致，
+# 以便用 scripts/check-config-samples.mjs 做结构比对（不引入 YAML 依赖）。
+#
+# 依赖：需同时加载 `@deepseek-ai/dsh-webhook`（提供 ctx.webhookRuntime）。
+- insert:
+    - id: webhook-bridge
+      name: dsh-webhook-bridge
+      config:
+        # 精确 POST 路由（必须是以 / 开头的非根路径，且无结尾斜杠/查询/片段）
+        path: /openclaw-wechat
+        # 桥接实例名，进入投递来源标识
+        source: openclaw-wechat
+        # 共享密钥：**环境变量 DSH_BRIDGE_SECRET_FILE 优先**（可指向别的密钥文件），
+        # 未设置时用下面这个占位路径兜底；两者都读不到再回退到 secretEnv 指定的环境变量。
+        # 占位符 —— 真实部署请指向仓库外的密钥文件，且不要把它提交进任何仓库。
+        secretFile: 'C:\path\to\dsh-bridge-secret.txt'
+        # 共享密钥环境变量名（secretFile 不存在时使用）
+        secretEnv: DSH_BRIDGE_SECRET
+        # 允许创建会话的工作区根目录（请求里的 workspacePath 必须落在其内，且必须已存在）
+        workspaceRoot: 'D:\path\to\workspace'
+        # 权限档位：read-only | workspace-write | danger-full-access
+        permissionPreset: workspace-write
+        # agent preset id：standard | minimal | ptc | cordis
+        agentPreset: standard
+        # 调用者白名单：留空表示不校验 sender（生产环境建议填，值与 hook 转发过来的 sender 精确匹配）
+        allowSenders: []
+        # 请求体上限（字节）
+        maxBodyBytes: 65536
+        # 派发后确认"会话确实建成"的最长等待（毫秒）；超时返回 502
+        confirmTimeoutMs: 5000
+        # 请求带 wait:true 时等待本轮完成的最长时限（毫秒）；超时返回 504
+        waitTimeoutMs: 120000
+        # 会话亲和窗口（毫秒）：同一 conversationId/sender 在该窗口内归属同一会话边界；
+        # 上一轮仍在跑时合并进下一次派发（不新建会话），窗口过期则新建并写日志。
+        affinityWindowMs: 900000
+        # 节流（毫秒）：距上次派发不足该值的新消息并入下一次派发
+        minIntervalMs: 1500
+        # 一次派发最多合并多少段消息 / 合并文本字符上限
+        maxFragments: 20
+        maxMergedChars: 8000
+        # 判定 needs_input 的工具名（这些工具在等用户回答时回合不结束，立即回传编号选项）
+        questionTools: ['ask_user_question']
+        # 中继模式：把 text 直接作为新会话 prompt
+        relay: true
+        # 诊断日志文件；留空则不写
+        logFile: ''
+        diagnostic: false

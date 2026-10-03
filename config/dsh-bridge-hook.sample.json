@@ -1,0 +1,11 @@
+{
+  "$comment": "旁挂 JSON 样例（默认路径 <OPENCLAW_STATE_DIR 或 ~/.openclaw>/dsh-bridge-hook.json，可用 DSH_BRIDGE_HOOK_CONFIG 覆盖）。这个文件是 message:received 事件下最可靠的配置来源，但它是**密钥文件**：请放在仓库外、限制权限、绝不提交。所有值为占位符。",
+  "url": "http://127.0.0.1:25567/openclaw-wechat",
+  "secret": "<DSH_BRIDGE_SECRET>",
+  "workspacePath": "D:\\path\\to\\workspace",
+  "channels": ["openclaw-weixin"],
+  "wait": false,
+  "timeoutMs": 15000,
+  "includeTitle": false,
+  "logBody": false
+}

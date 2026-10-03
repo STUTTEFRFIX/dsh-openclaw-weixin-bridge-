@@ -1,0 +1,22 @@
+{
+  "$comment": "OpenClaw 配置片段样例：启用 dsh-bridge hook 并给出 per-hook env。全部值为占位符，禁止填入真实密钥后提交。注意：per-hook env 不会改写 process.env，且 message:received 不保证带 cfg，所以对 message:received 而言可靠来源是 Gateway 进程环境变量或旁挂 JSON（见 config/dsh-bridge-hook.sample.json）。",
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "dsh-bridge": {
+          "enabled": true,
+          "env": {
+            "DSH_BRIDGE_URL": "http://127.0.0.1:25567/openclaw-wechat",
+            "DSH_BRIDGE_SECRET": "<DSH_BRIDGE_SECRET>",
+            "DSH_BRIDGE_WORKSPACE": "D:\\path\\to\\workspace",
+            "DSH_BRIDGE_CHANNELS": "openclaw-weixin",
+            "DSH_BRIDGE_WAIT": "0",
+            "DSH_BRIDGE_TIMEOUT_MS": "15000",
+            "DSH_BRIDGE_LOG_BODY": "0"
+          }
+        }
+      }
+    }
+  }
+}
