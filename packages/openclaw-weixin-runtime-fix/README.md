@@ -11,7 +11,7 @@
 
 微信通道入站消息能收到、也会进入会话管道，但回复派发失败：
 
-```
+```text
 gateway/channels/openclaw-weixin: dispatchReplyFromConfig: error agentId=main
   err=WorkerTaskError: DataCloneError: #<Object> could not be cloned.
 gateway/channels/openclaw-weixin/…-im-bot: getUpdates error: WorkerTaskError: DataCloneError: …
@@ -35,7 +35,7 @@ gateway/channels/openclaw-weixin/…-im-bot: getUpdates error: WorkerTaskError: 
 
 ## 本包做什么
 
-```
+```text
 lib/clone-sanitize.mjs   注入源码本体（analyzeCloneRejection / describeCloneShape /
                          sanitizeForClone / cloneRetrySanitized / readCtorName），
                          同时可作为普通模块被自测 import
@@ -76,7 +76,7 @@ pwsh -NoProfile -File scripts/apply.ps1 -RestartGateway      # 或手动 opencla
 
 `-Action apply` 的顺序是：
 
-```
+```text
 （无备份则先不改动任何文件）
   读取目标 → 生成候选到 %TEMP%   ← 生成失败/指纹缺失 → 直接失败，目标文件不变
             → 语法门禁 node --input-type=module --check ← 不通过 → 直接失败，目标文件不变

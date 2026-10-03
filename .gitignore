@@ -19,3 +19,7 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# 内部过程单（不随开源发布）
+DELIVERY-*.md
+

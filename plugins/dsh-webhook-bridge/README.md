@@ -20,7 +20,7 @@ Workspace 会话**，并把请求里的文本作为 prompt 投递进去；可选
 
 请求：
 
-```
+```http
 POST <path>                              # 精确匹配，无结尾斜杠/查询/片段
 Content-Type: application/json; charset=utf-8
 Authorization: Bearer <shared-secret>    # 或 x-bridge-secret: <shared-secret>

@@ -27,7 +27,7 @@ OpenClaw 侧的可安装 **hook pack**：订阅 `message:received`（入站）�
 
 ## 包结构
 
-```
+```text
 package.json        声明 openclaw.hooks: ["."] 与 type: module（都是宿主加载所必需，见下）
 HOOK.md             hook 描述与 metadata（name / metadata.openclaw.events = received + sent）
 handler.js          处理器实现（默认导出 + 具名导出便于自测）

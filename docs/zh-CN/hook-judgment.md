@@ -1,4 +1,4 @@
-# 通道 hook 的转发判断（t6）
+# 通道 hook 的转发判断
 
 > 面向部署者与审核者：说明**哪些微信消息会被转发到 DSH、哪些会被跳过、为什么**，
 > 以及怎么覆盖判断、怎么审计。
@@ -55,25 +55,29 @@
 | `DSH_BRIDGE_BOT_IDS` | 空 | 视为自身/bot 的 sender 列表 |
 | `DSH_BRIDGE_LOOP_WINDOW_MS` | `180000` | 标记环时间窗 |
 | `DSH_BRIDGE_COALESCE_MS` | `1500` | 同源多段合并的静默窗口（0 关闭） |
-| `DSH_BRIDGE_MIN_INTERVAL_MS` | `1500` | 节流间隔 |
 | `DSH_BRIDGE_FORWARD_LOG` | `<stateDir>/logs/bridge-forward.log` | 判断日志路径 |
 
-## 4. 防自回环（I8）
+> 上表全部是 **hook 侧**配置（实现见 `handler.js` 的 `pickEnvironmentOverrides` /
+> `pickFileOverrides`）。节流间隔 `minIntervalMs`、亲和窗口 `affinityWindowMs`
+> **不是 hook 侧配置**，它们属于 DSH 桥接插件（`plugins/dsh-webhook-bridge/cordis.patch.yml`）；
+> 设成 `DSH_BRIDGE_MIN_INTERVAL_MS` 不会有任何效果。
 
-hook 同时订阅 `message:sent`（依据：`~/.dsh-win/node/node_modules/openclaw/dist/internal-hook-types-Deg4lhm7.mjs`
+## 4. 防自回环
+
+hook 同时订阅 `message:sent`（依据：`<openclaw>/dist/internal-hook-types-*.mjs`
 里的 `KNOWN_INTERNAL_HOOK_EVENT_KEYS` 含 `message:received` 与 `message:sent`）：
 凡本进程发出的出站文本都会进「标记环」；入站命中标记环（完全一致，或 ≥24 字符的前缀包含）、
 带回复标记、或来自 bot/自身账号 → 跳过并记日志 `rule=self-loop-echo|self-loop-marker|self-loop-sender`。
 
 历史事实（进入已知问题与警告）：**自回环曾凭空产生会话并消耗额度** —— 桥接把答复复述回微信后，
-通道 hook 把它当成新的用户入站消息再次转发 DSH，生成一个新的无意义会话（实测 `webhook-dc144e09-…`，
-`turn/end` 为 `aborted`，回传 71 字符时 `send timeout`）。现在由出站标记环拦截。
+通道 hook 把它当成新的用户入站消息再次转发 DSH，生成一个新的无意义会话（回传 71 字符时
+`send timeout`，`turn/end` 为 `aborted`）。现在由出站标记环拦截。
 
 ## 5. 审计日志
 
 每次判断都会向 `bridge-forward.log` 追加一行（`appendFileSync`，失败被吞掉，不影响转发）：
 
-```
+```text
 [2026-10-03T04:00:00.000Z] enter type=message action=received channel=openclaw-weixin from=<sender> origin=conv:<id> textLen=27 decision=skip rule=greeting
 [2026-10-03T04:00:01.000Z] enter … decision=forward rule=capability-path
 [2026-10-03T04:00:02.000Z] enter … result=buffered reason=coalesced fragments=2
@@ -90,7 +94,9 @@ hook 同时订阅 `message:sent`（依据：`~/.dsh-win/node/node_modules/opencl
 
 ## 6. 未验证项
 
-- 判断规则本身有单元断言（`test-handler.mjs`，条数以脚本输出为准——当前 109 条），但**未在真实微信消息流上做长期观察**：
+- 判断规则本身有单元断言（`test-handler.mjs`，条数以脚本输出为准），但**未在真实微信消息流上做长期观察**：
   阈值（12 / 30 字符）与中英关键词表是按用户反馈设计的启发式，可能需要按你的实际用语调整。
 - 「本条消息是否值得转发」本质是**语义判断**，本实现用的是可解释的规则，不是模型判断；
   漏报/误报都会记在 `bridge-forward.log` 里，便于事后按 `rule=` 收紧或放宽。
+- 与判断相关的其它风险（默认跳过会漏转发、闲聊在 DSH 侧被反问/中止、日志隐私边界）
+  集中列在 `known-issues.md` 的 KI-4 / KI-8 / KI-11 / KI-12。
