@@ -10,15 +10,15 @@ function resolveWorkspaceWithin(root, requested) {
   if (foldedCandidate !== foldedRoot && !foldedCandidate.startsWith(prefix)) throw new Error("outside");
   return candidate;
 }
-const root = "D:\\DS";
+const root = "C:\\ws";
 const cases = [
   ["默认(undefined)", undefined, true],
-  ["根目录本身", "D:\\DS", true],
-  ["子目录", "D:\\DS\\sub", true],
-  ["穿越 ..\\", "D:\\DS\\..\\Windows", false],
+  ["根目录本身", "C:\\ws", true],
+  ["子目录", "C:\\ws\\sub", true],
+  ["穿越 ..\\", "C:\\ws\\..\\Windows", false],
   ["绝对外部", "C:\\Windows", false],
-  ["同前缀兄弟目录", "D:\\DSX", false],
-  ["大小写变体", "d:\\ds\\sub", true],
+  ["同前缀兄弟目录", "C:\\wsX", false],
+  ["大小写变体", "c:\\ws\\sub", true],
   ["大小写外部", "c:\\windows", false],
 ];
 let ok = 0;

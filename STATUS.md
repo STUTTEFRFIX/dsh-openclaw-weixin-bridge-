@@ -56,4 +56,4 @@ git archive --format=zip -o dist.zip HEAD
 ## 内部交付记录
 
 逐轮（t1/t3/t6/t7/t9…）的交付说明、验证命令与未验证项清单**不放在本仓库**（避免把内部
-审核过程与机器信息带进公开仓库），由 captain 保留在仓库外：`D:\DS\reports\dsh-weixin-bridge-internal\`。
+审核过程与机器信息带进公开仓库），由 captain 保留在仓库外：（本机 DSH 工作区内的内部记录目录，不随本仓库发布）。

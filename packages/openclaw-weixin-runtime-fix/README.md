@@ -31,7 +31,7 @@ gateway/channels/openclaw-weixin/…-im-bot: getUpdates error: WorkerTaskError: 
 | --- | --- |
 | `openclaw/dist/worker-task-pool-*.mjs`（2026.9.7） | 派发点 `worker.postMessage({ input, taskId: task.id, interactive: Boolean(task.options.onRequest), nativeSections: slot.nativeSections.buffer, sampleMemory: true }, transferList)` 的同文件内还有两处 `worker.postMessage`（资源回收、response 投递），并非同一形状 |
 | `openclaw/dist/worker-task-pool-*.mjs` 中 `WorkerTaskError` | 同文件内定义（`class extends Error`，第二参数是 kind，如 `"unavailable"`），注入代码沿用它构造失败对象 |
-| DSH 报告 `reports/openclaw-weixin-dataclone-issue.md`（工作区 `D:\DS`，仓库外） | 运行时诊断输出 `$.request.env … container-all-children-cloneable`、`[FIX-CLONE] 净化重试成功` 等实测证据 |
+| DSH 报告 `reports/openclaw-weixin-dataclone-issue.md`（DSH 工作区内，仓库外） | 运行时诊断输出 `$.request.env … container-all-children-cloneable`、`[FIX-CLONE] 净化重试成功` 等实测证据 |
 
 ## 本包做什么
 

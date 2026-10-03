@@ -159,7 +159,7 @@ function receivedEvent(overrides = {}) {
     context: {
       from: "user-placeholder@im.wechat",
       conversationId: "conv-placeholder",
-      content: "请把 D:\\DS\\repos 的失败日志贴出来，并给出修复补丁",
+      content: "请把 D:\\ws\\repos 的失败日志贴出来，并给出修复补丁",
       channelId: "openclaw-weixin",
       messageId: "openclaw-weixin:0000000000000-aaaaaaaa",
       ...(overrides.context ?? {}),
@@ -354,7 +354,7 @@ group("3. 防自回环应跳过");
 {
   // 真实通道里 bot 标识更常出现在 metadata.senderId（from 可能是用户）：
   // 若这里不查 metadata，长技术回文就会被当成用户任务转发出去（自回环）。
-  const botEcho = "已定位，三类缺陷都成立，我这边还发现一个你没提的问题：桥接回传会被通道 hook 当成新的入站消息，请修复 D:\\DS 下的构建报错并给出补丁";
+  const botEcho = "已定位，三类缺陷都成立，我这边还发现一个你没提的问题：桥接回传会被通道 hook 当成新的入站消息，请修复 D:\\ws 下的构建报错并给出补丁";
   const { result, calls } = await run(receivedEvent({ context: { content: botEcho, metadata: { senderId: "bot-placeholder@im.wechat" } } }), {
     env: { DSH_BRIDGE_URL: URL_OK, DSH_BRIDGE_SECRET: SECRET, DSH_BRIDGE_COALESCE_MS: "0", DSH_BRIDGE_BOT_IDS: "bot-placeholder@im.wechat" },
   });
@@ -434,7 +434,7 @@ group("4. 同源多段合并与重用窗口");
     release = resolve;
   });
   const env = { DSH_BRIDGE_URL: URL_OK, DSH_BRIDGE_SECRET: SECRET, DSH_BRIDGE_COALESCE_MS: "1000" };
-  const firstPromise = run(receivedEvent({ context: { content: "请修复 D:\\DS 下的构建报错" } }), { state, env, extra: { sleep: () => gate } });
+  const firstPromise = run(receivedEvent({ context: { content: "请修复 D:\\ws 下的构建报错" } }), { state, env, extra: { sleep: () => gate } });
   await new Promise((resolve) => setImmediate(resolve));
   const second = await run(receivedEvent({ context: { content: "另外请把补丁贴出来" } }), { state, env });
   release();
@@ -553,7 +553,7 @@ check("桥接 aborted → 三态 aborted", mapBridgeResponse({ status: "aborted"
 check("桥接 merged → 合并态（窗口内复用）", mapBridgeResponse({ status: "merged", sessionId: "s1" }).state === "merged");
 
 {
-  const { result, logger, sink } = await run(receivedEvent({ context: { content: "请实现 D:\\DS\\repos 的补丁" } }), {
+  const { result, logger, sink } = await run(receivedEvent({ context: { content: "请实现 D:\\ws\\repos 的补丁" } }), {
     response: fakeResponse(200, {
       status: "needs_input",
       state: "needs_input",
@@ -568,7 +568,7 @@ check("桥接 merged → 合并态（窗口内复用）", mapBridgeResponse({ st
 }
 
 {
-  const { result, sink } = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const { result, sink } = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     response: fakeResponse(200, { status: "aborted", state: "aborted", sessionId: "webhook-ab" }),
   });
   check("aborted 被如实回传（不伪装成 completed）", result.state === "aborted" && result.replyText === "", JSON.stringify(result));
@@ -587,28 +587,28 @@ group("6. 审计日志、配置与健壮性");
 }
 
 {
-  const broken = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const broken = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     extra: { fetch: null },
   });
   check("运行时不提供 fetch（显式禁用）时安全跳过", broken.result.skipped === RULES.NO_FETCH, JSON.stringify(broken.result));
 }
 
 {
-  const { result } = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const { result } = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     env: { DSH_BRIDGE_URL: "file:///etc/passwd", DSH_BRIDGE_SECRET: SECRET, DSH_BRIDGE_COALESCE_MS: "0" },
   });
   check("非 http(s) URL 被拒（bad-url）", result.skipped === RULES.BAD_URL, JSON.stringify(result));
 }
 
 {
-  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     env: { DSH_BRIDGE_SECRET: SECRET, DSH_BRIDGE_COALESCE_MS: "0" },
   });
   check("缺 URL 时跳过并告警", result.skipped === RULES.UNCONFIGURED && logger.lines.some((line) => line.includes("DSH_BRIDGE_URL")), JSON.stringify(result));
 }
 
 {
-  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     response: () => {
       throw new Error(`connect ECONNREFUSED 127.0.0.1:25567 (Bearer ${SECRET})`);
     },
@@ -618,11 +618,11 @@ group("6. 审计日志、配置与健壮性");
 }
 
 {
-  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), {
+  const { result, logger } = await run(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), {
     response: fakeResponse(401, { status: "error", code: 401, message: "invalid bridge secret" }),
   });
   check("401 被记录且不抛错", result.ok === false && result.status === 401, JSON.stringify(result));
-  check("错误响应里的事件正文不被回显到日志（logBody 关闭）", logger.lines.every((line) => !line.includes("请修复 D:\\DS 的报错")));
+  check("错误响应里的事件正文不被回显到日志（logBody 关闭）", logger.lines.every((line) => !line.includes("请修复 D:\\ws 的报错")));
 }
 
 {

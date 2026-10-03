@@ -129,7 +129,7 @@ function receivedEvent(overrides = {}) {
     context: {
       from: "user-placeholder@im.wechat",
       conversationId: "conv-placeholder",
-      content: "请读取 D:\\DS\\repos 的构建日志并给出修复补丁",
+      content: "请读取 D:\\ws\\repos 的构建日志并给出修复补丁",
       channelId: "openclaw-weixin",
       messageId: "openclaw-weixin:0000000000000-aaaaaaaa",
       ...(overrides.context ?? {}),
@@ -238,7 +238,7 @@ group("行为冒烟");
 }
 
 {
-  const { result, calls } = await runHandler(receivedEvent({ context: { content: "请读取 D:\\DS\\repos 的构建日志并给出修复补丁" } }));
+  const { result, calls } = await runHandler(receivedEvent({ context: { content: "请读取 D:\\ws\\repos 的构建日志并给出修复补丁" } }));
   check("需要本地能力的消息被转发", result.ok === true && calls.length === 1, JSON.stringify(result));
   const body = JSON.parse(String(calls[0]?.init?.body ?? "{}"));
   check("请求体含 text/sender/conversationId", body.text !== "" && body.sender !== "" && body.conversationId === "conv-placeholder", JSON.stringify(body));
@@ -252,7 +252,7 @@ group("行为冒烟");
 
 {
   const logger = makeLogger();
-  const { result } = await runHandler(receivedEvent({ context: { content: "请实现 D:\\DS 的补丁" } }), {
+  const { result } = await runHandler(receivedEvent({ context: { content: "请实现 D:\\ws 的补丁" } }), {
     response: fakeResponse(200, {
       status: "needs_input",
       state: "needs_input",
@@ -339,7 +339,7 @@ group("空宿主安全（无 openclaw / 无状态目录）");
   check("空环境下配置解析不抛错且给出默认日志路径", typeof resolved.config.forwardLog === "string" && resolved.config.forwardLog !== "");
   check("空环境下侧挂配置读取失败被记录（不抛错）", resolved.fileError.includes("ENOENT"), resolved.fileError);
   check("默认旁挂配置路径以 dsh-bridge-hook.json 结尾", defaultConfigPath({}).endsWith("dsh-bridge-hook.json"), defaultConfigPath({}));
-  const { result } = await runHandler(receivedEvent({ context: { content: "请修复 D:\\DS 的报错" } }), { env: { DSH_BRIDGE_URL: "", DSH_BRIDGE_SECRET: "" } });
+  const { result } = await runHandler(receivedEvent({ context: { content: "请修复 D:\\ws 的报错" } }), { env: { DSH_BRIDGE_URL: "", DSH_BRIDGE_SECRET: "" } });
   check("未配置 URL/密钥时安全跳过（unconfigured）", result.skipped === RULES.UNCONFIGURED, JSON.stringify(result));
   check("本脚本已定义 skip()（空宿主环境不会 ReferenceError）", typeof skip === "function");
 }
