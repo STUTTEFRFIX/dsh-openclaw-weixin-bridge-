@@ -20,7 +20,8 @@
  *   代价是可能漏掉一些用户其实想交给 DSH 的模糊消息。三种显式解除方式：
  *     1) 消息以约定的显式前缀开头（默认 `#dsh `）→ 无视判断直接转发；
  *     2) `DSH_BRIDGE_DEFAULT_DECISION=forward` → 把“无法判定”改成转发；
- *     3) `DSH_BRIDGE_JUDGMENT=off` → 关闭判断（只剩自回环/空消息过滤，回到旧行为）。
+ *     3) `DSH_BRIDGE_JUDGMENT=off` → 关闭**内容判断**（闲聊/能力信号那部分），
+ *        但「回复标记 + 出站标记环」两条自回环过滤仍然生效（否则循环会重新出现）。
  *   判断结果、命中规则、合一/节流结果都会写进 bridge-forward.log，可事后审计。
  *
  * 防自回环（t6 的 I8 条目）
@@ -247,7 +248,6 @@ function pickEnvironmentOverrides(source) {
     ["DSH_BRIDGE_TIMEOUT_MS", "timeoutMs"],
     ["DSH_BRIDGE_COALESCE_MS", "coalesceMs"],
     ["DSH_BRIDGE_LOOP_WINDOW_MS", "loopWindowMs"],
-    ["DSH_BRIDGE_MIN_INTERVAL_MS", "minIntervalMs"],
     ["DSH_BRIDGE_MAX_FRAGMENTS", "maxFragments"],
     ["DSH_BRIDGE_MAX_MERGED_CHARS", "maxMergedChars"],
   ]) {
@@ -255,6 +255,9 @@ function pickEnvironmentOverrides(source) {
       overrides[field] = asNonNegativeInt(source[envKey], JUDGMENT_CONFIG[field]);
     }
   }
+  // 注意：节流间隔（minInterval）**不是 hook 侧配置**，而是 DSH 桥接插件的 `minIntervalMs`
+  // （见 plugins/dsh-webhook-bridge/cordis.patch.yml）。此前这里误解析 DSH_BRIDGE_MIN_INTERVAL_MS，
+  // 设了也不生效，t9 已删除，避免误导。
 
   if (source.DSH_BRIDGE_JUDGMENT !== undefined) {
     const value = asTrimmedString(source.DSH_BRIDGE_JUDGMENT).toLowerCase();
@@ -278,7 +281,7 @@ function pickFileOverrides(source) {
   for (const field of ["wait", "includeTitle", "logBody", "echoBack"]) {
     if (source[field] !== undefined) overrides[field] = asBoolean(source[field], JUDGMENT_CONFIG[field]);
   }
-  for (const field of ["timeoutMs", "coalesceMs", "loopWindowMs", "minIntervalMs", "maxFragments", "maxMergedChars"]) {
+  for (const field of ["timeoutMs", "coalesceMs", "loopWindowMs", "maxFragments", "maxMergedChars"]) {
     if (source[field] !== undefined && asTrimmedString(source[field]) !== "") {
       overrides[field] = asNonNegativeInt(source[field], JUDGMENT_CONFIG[field]);
     }
@@ -434,8 +437,9 @@ export class EchoRing {
 
 /**
  * 转发判断。返回 `{decision, rule, text}`，text 已去掉显式前缀。
- * 判定顺序：显式前缀 → 判断开关 → 回复标记 → 自回环标记环 → 闲聊/确认类（仅短消息）
- *          → 能力信号（路径/命令/关键词/多行/长度）→ 默认结果。
+ * 判定顺序（t9 修正：自回环过滤**不受 judgment 开关影响**，永远先跑）：
+ *   显式前缀 → 回复标记 → 自回环标记环 → 判断开关（off 即转发）→ 闲聊/确认类（仅短消息）
+ *   → 能力信号（路径/命令/关键词/多行/长度）→ 默认结果。
  */
 export function decideForward({ text, judgment, defaultDecision, forwardPrefix, echoRing, now, config = {} }) {
   const raw = asTrimmedString(text);
@@ -443,14 +447,16 @@ export function decideForward({ text, judgment, defaultDecision, forwardPrefix, 
   if (prefix !== "" && raw.toLowerCase().startsWith(prefix.toLowerCase())) {
     return { decision: DECISION.FORWARD, rule: RULES.OVERRIDE_PREFIX, text: raw.slice(prefix.length).trim() || raw };
   }
-  if (asTrimmedString(judgment).toLowerCase() === "off") {
-    return { decision: DECISION.FORWARD, rule: RULES.DEFAULT_FORWARD, text: raw };
-  }
+  // 自回环过滤（回复标记 + 出站标记环）：无论 judgment 开关如何都必须生效，
+  // 否则 judgment=off 时 hook→DSH→hook 的循环会重新出现（文档所说的“只剩自回环过滤”即指这两条）。
   if (echoRing !== undefined && echoRing !== null && echoRing.hasMarker(raw)) {
     return { decision: DECISION.SKIP, rule: RULES.SELF_LOOP_MARKER, text: raw };
   }
   const hit = echoRing?.match(raw, now);
   if (hit) return { decision: DECISION.SKIP, rule: RULES.SELF_LOOP_ECHO, text: raw, detail: hit };
+  if (asTrimmedString(judgment).toLowerCase() === "off") {
+    return { decision: DECISION.FORWARD, rule: RULES.DEFAULT_FORWARD, text: raw };
+  }
 
   const shortMax = asNonNegativeInt(config.shortMessageMaxChars, JUDGMENT_CONFIG.shortMessageMaxChars);
   const capabilityMin = asNonNegativeInt(config.capabilityMinChars, JUDGMENT_CONFIG.capabilityMinChars);

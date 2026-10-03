@@ -1,11 +1,24 @@
 {
-  "$comment": "旁挂 JSON 样例（默认路径 <OPENCLAW_STATE_DIR 或 ~/.openclaw>/dsh-bridge-hook.json，可用 DSH_BRIDGE_HOOK_CONFIG 覆盖）。这个文件是 message:received 事件下最可靠的配置来源，但它是**密钥文件**：请放在仓库外、限制权限、绝不提交。所有值为占位符。",
+  "$comment": "旁挂 JSON 样例（默认路径 <OPENCLAW_STATE_DIR 或 ~/.openclaw>/dsh-bridge-hook.json，可用 DSH_BRIDGE_HOOK_CONFIG 覆盖）。这个文件是 message:received 事件下最可靠的配置来源（该事件的 context 不保证带 cfg），但它是**密钥文件**：请放在仓库外、限制权限、绝不提交。所有值为占位符。注意：**判断默认开启**（judgment=on / defaultDecision=skip），即闲聊、确认、追问类短消息默认**不转发**；要让某条消息一定转发请用 `#dsh ` 前缀。",
   "url": "http://127.0.0.1:25567/openclaw-wechat",
   "secret": "<DSH_BRIDGE_SECRET>",
   "workspacePath": "D:\\path\\to\\workspace",
   "channels": ["openclaw-weixin"],
-  "wait": false,
-  "timeoutMs": 15000,
+
+  "judgment": "on",
+  "defaultDecision": "skip",
+  "forwardPrefix": "#dsh",
+  "replyMarker": "[dsh]",
+  "botIds": ["<BOT_SENDER_ID>"],
+  "loopWindowMs": 180000,
+
+  "coalesceMs": 1500,
+  "maxFragments": 20,
+  "maxMergedChars": 8000,
+
+  "wait": true,
+  "timeoutMs": 130000,
   "includeTitle": false,
-  "logBody": false
+  "logBody": false,
+  "forwardLog": "<stateDir>\\logs\\bridge-forward.log"
 }

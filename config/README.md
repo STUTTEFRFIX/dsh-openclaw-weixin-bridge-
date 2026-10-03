@@ -10,9 +10,19 @@
 | `openclaw-hooks.sample.json` | **OpenClaw 侧**：启用 `dsh-bridge` hook 的 `hooks.internal.entries` 片段 | 合并进 `openclaw.json` |
 | `dsh-bridge-hook.sample.json` | **OpenClaw 侧**：hook 的旁挂配置文件（含共享密钥），`message:received` 事件下最可靠的配置来源 | 复制到仓库外，例如 `<stateDir>/dsh-bridge-hook.json`，并设置最小文件权限 |
 
-> **机器相关值一律不进受版本控制的文件**：模板只留占位符；本机真实值放 `*.local.*`（已 gitignore）或环境变量
-> （`DSH_BRIDGE_SECRET_FILE`、`DSH_BRIDGE_BASE_URL`、`DSH_BRIDGE_WORKSPACE_ROOT`）。
-> 另有环境变量 `DSH_BRIDGE_SECRET_FILE`（共享密钥文件）与 `DSH_BRIDGE_SECRET`（密钥本体，不推荐）供部署覆盖。
+> **机器相关值一律不进受版本控制的文件**：模板只留占位符；本机真实值放 `*.local.*`（已 gitignore）或环境变量。
+> 按适用侧区分（别混用）：
+>
+> | 环境变量 | 适用侧 | 作用 |
+> | --- | --- | --- |
+> | `DSH_BRIDGE_SECRET_FILE` | **DSH 插件侧**（也可被 hook 侧脚本引用） | 覆盖 `secretFile` 指向的密钥文件路径（优先级最高） |
+> | `DSH_BRIDGE_SECRET` | **DSH 插件侧**（`secretEnv` 的名字） | 密钥本体（不推荐，容易泄漏到进程环境） |
+> | `DSH_BRIDGE_WORKSPACE` | **hook 侧** | 转发时附带的 `workspacePath`（须落在 DSH 的 `workspaceRoot` 内且已存在） |
+> | `DSH_BRIDGE_*`（URL/SECRET/JUDGMENT/…） | **hook 侧** | 见 `plugins/openclaw-hook-dsh-bridge/HOOK.md` 的配置表 |
+> | `DSH_BRIDGE_BASE_URL` | **联调脚本侧**（`scripts/test-bridge.ps1`） | 覆盖联调脚本请求的 `http://127.0.0.1:<port>` |
+>
+> 注意：**没有** `DSH_BRIDGE_WORKSPACE_ROOT` 这个 hook 侧变量——工作区围栏由 DSH 插件的 `workspaceRoot`
+> 配置项负责（`cordis.patch.yml` / 本地覆盖文件）。
 
 ## 占位符约定
 

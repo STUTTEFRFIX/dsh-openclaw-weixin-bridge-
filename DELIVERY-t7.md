@@ -14,7 +14,7 @@
 | **f1** self-test 调用未定义的 `skip()`（空宿主必崩） | **t6 已修**（`skip()` 已定义、SKIP 单独计数不影响退出码、文件内不再调用任何未定义标识符）；t7 复验空宿主跑法 → `30 passed, 0 failed, 1 skipped`，**exit 0** 且打印汇总；并把空宿主复验命令写进 hook README | `plugins/openclaw-hook-dsh-bridge/test/self-test.mjs`（第 57 行 `function skip(name, why)`）、`plugins/openclaw-hook-dsh-bridge/README.md` |
 | **f2** 根 README 承诺「中英双语文档见 docs/」，但 `docs/en/` 为空 | 取 captain 授权的 **A 分支（严格限缩）**：只改根 README 中那**一处**双语承诺，如实表述「`docs/zh-CN/` 已交付 2 页；`docs/en/` 规划中、尚未交付，t3 负责」；**未**新建/修改 `docs/en/**`；同时在 DELIVERY-t1 §4 新增第 7 条**显式登记**「英文文档仍未交付」 | `README.md`（第 6 行与结构表 docs 行）、`DELIVERY-t1.md` §4.7 |
 | **f3** 三个文件含机器相关默认值 | `cordis.patch.yml` → `secretFile: ''` + `workspaceRoot: '<workspace-root>'`（注释写明 `$env:DSH_BRIDGE_SECRET_FILE` 优先、`<stateDir>/bridge-secret.txt` 兜底）；`scripts/test-bridge.ps1` → 默认值改为环境变量优先 + `<stateDir>` 兜底（`$env:DSH_HOME` → `$env:USERPROFILE\.dsh`），`BaseUrl` 亦可由 `$env:DSH_BRIDGE_BASE_URL` 覆盖；`DELIVERY-t1.md:137` → 改为 `C:\Users\<用户名>\…\bridge-secret.txt` 的占位符表述。**本机真实值**移入 gitignored 的 `config/dsh-webhook-bridge.patch.local.yml`（`.gitignore` 第 9 行 `config/*.local.*`） | `plugins/dsh-webhook-bridge/cordis.patch.yml`、`scripts/test-bridge.ps1`、`DELIVERY-t1.md`、`config/dsh-webhook-bridge.patch.local.yml`（新）、`config/README.md` |
-| **f4** 条数表述不一致（hook README「72」等） | hook README 的验证段改为**不写死条数**（并补上 `test-handler.mjs` + 空宿主复验命令）；DELIVERY-t1 的两处 79 标注为「t1 时 79，t6 重写后 38」；DELIVERY-t6 的 98 更正为 101（并注明 t7 增补后为 104） | `plugins/openclaw-hook-dsh-bridge/README.md`、`DELIVERY-t1.md` §1/§2、`DELIVERY-t6.md` §2/§3 |
+| **f4** 条数表述不一致（hook README「72」等） | hook README 的验证段改为**不写死条数**（并补上 `test-handler.mjs` + 空宿主复验命令）；DELIVERY-t1 的两处 79 标注为「t1 时 79，t6 重写后 38」。**更正（t9）**：`DELIVERY-t6.md` 不在 t7 的任务 In-scope 声明内（完成校验器会拒绝），故 t7 **没有**改动它——本行旧版声称「更正为 101 / 注明 104」不准确；t9 已直接在 DELIVERY-t6 中把 98 标注为「t6 时值，t9 统一为 109」 | `plugins/openclaw-hook-dsh-bridge/README.md`、`DELIVERY-t1.md` §1/§2、`DELIVERY-t6.md`（t9 改） |
 | **f5** 注释声称 `[--real]` 但未实现 | **真正实现**三种语义：默认 `auto`（自动发现，找不到打印 SKIP）／`--real`（必须有副本，找不到即失败 exit 1）／`--no-real`（显式跳过该节）；`--real --no-real` 同时给出时 `--no-real` 优先；`OPENCLAW_WORKER_TASK_POOL` 指定的文件不存在时：`--real` 判失败、`auto` 只告警；注释与实现一致 | `packages/openclaw-weixin-runtime-fix/test/verify-clone-fix.mjs` |
 | **f6** DELIVERY 声明「8 项」与实际不符 | DELIVERY-t1 §4 现有 **7** 条（原 6 条 + t7 新增的 docs/en 登记），文件内加了「计数口径」说明：t1 汇报文本曾写 8 项、实际当时为 6 条，现已按实际统一 | `DELIVERY-t1.md` §4 末尾 |
 | **附带加固**（t7 复核时发现，属于 f3/I8 同族） | 防自回环的 sender 维度此前只看 `context.from`：真实通道里 bot 标识常出现在 `metadata.senderId`（captain 的验证脚本 case 8 就是这种形状），长技术回文会因此被当用户任务转发。现改为对**全部候选身份**（`from` / `metadata.senderId` / `senderUsername` / `senderE164` / `context.senderId`）逐一比对 botIds，并可与 `accountId` 比对判自身；新增 3 条回归断言 | `plugins/openclaw-hook-dsh-bridge/handler.js`、`plugins/openclaw-hook-dsh-bridge/test-handler.mjs` |
@@ -78,8 +78,15 @@ captain 先前「删掉会破坏本机可用行为」的担心对仓库模板不
 4. **`config/dsh-webhook-bridge.patch.local.yml` 的“本地覆盖”是约定而非自动机制**：
    DSH 的 profile 加载器是否支持 `$include`/覆盖文件未查证，因此文档里写明「部署时把值合并进
    profile 内那份 cordis.patch.yml」——这是人工步骤，未自动化。
-5. **仓库内没有 git**：`.gitignore` 的排除是按文本规则核对（`config/*.local.*` 与
-   `dsh-webhook-bridge.patch.local.yml` 匹配），未用 `git check-ignore` 实测（环境无 git）。
+5. **仓库内当时没有 git（t9 已更新）**：t7 交付时仓库内确实没有 `.git`，`.gitignore` 的排除只能按文本规则核对
+   （`config/*.local.*` 与 `dsh-webhook-bridge.patch.local.yml` 匹配），无法用 `git check-ignore` 实测。
+   **t9 更新**：captain 随后初始化了 git 并重建为单提交（`c4878b5`），历史卫生已单独处理并在 t9 复验；
+   现在可用 `git ls-files` / `git check-ignore -v` 实测（本机 git 不在 PATH，可用 GitHub Desktop 自带的
+   `…\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`）。
+6. **`.git` 历史（t9 登记）**：t7 时无从判断（无 `.git`）；captain 已把含真实账号 id 的旧历史整体重写为单提交，
+   t9 用 `scripts/scan-repo-hygiene.mjs`（全量解压 `.git/objects`）复验：**真实账号 id / 机器用户路径 0 命中**
+   （仅剩占位符形态），`git log --all -p` 中 `f19bd…` 与 `C:\Users\<用户名>` 形式均 0 命中。
+   仍未做：带签名的发布/归档校验（如 `git archive` + 校验和）不在本轮范围。
 6. `--real` 的“找不到副本即失败”分支是通过「显式指定不存在的路径」验证的；
    “自动发现完全无候选”这一分支在本机无法构造（PATH 里就含 DSH 自带的 openclaw 目录）。
 

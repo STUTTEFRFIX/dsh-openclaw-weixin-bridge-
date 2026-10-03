@@ -35,7 +35,7 @@
 | `npm run check` | exit 0：`check-syntax: 16/16 通过`；`check-config-samples: 通过`（YAML 键骨架 23 键一致、无真实密钥命中） |
 | `node plugins/openclaw-hook-dsh-bridge/test/self-test.mjs` | exit 0，`38 passed, 0 failed, 0 skipped`（含宿主 discovery 实测 8 条） |
 | **空宿主** `USERPROFILE/DSH_WIN_HOME/APPDATA/OPENCLAW_STATE_DIR` → 空目录后跑 self-test | exit 0，`30 passed, 0 failed, 1 skipped`，照常打印汇总（**t7/f1 已修**） |
-| 空宿主下跑 `test-handler.mjs` | exit 0，`98 passed, 0 failed` |
+| 空宿主下跑 `test-handler.mjs` | exit 0，t6 时 `98 passed, 0 failed`；**t9 统一后的实际值为 109 passed / 0 failed**（见 DELIVERY-t9） |
 | `node packages/openclaw-weixin-runtime-fix/test/verify-clone-fix.mjs` | exit 0，`56 passed, 0 failed`（回归：t1 资产未被破坏） |
 | `pwsh -NoProfile -File packages/openclaw-weixin-runtime-fix/test/apply-gate-test.ps1` | exit 0，`27 passed, 0 failed` |
 | `Get-ChildItem -Recurse -Filter package.json … \| ConvertFrom-Json` | exit 0，4 个 `package.json` 全部可解析 |
@@ -62,7 +62,7 @@
 | 会话复用窗口 + 窗口过期有日志 + 同源多段合并 | `SessionAffinity`/`FragmentCoalescer` + `lib/index.js` 接线；第 4 节断言（含 `affinity-window-expired`、`affinity-reuse`、合并后只发一次） |
 | 三态 + needs_input 纯文本编号选项 | `detectTurnState` + `formatNumberedOptions` + `mapBridgeResponse`；第 5 节断言 |
 | needs_input 若无法区分须明写限制 | 本文件 §4 与 `docs/zh-CN/session-reuse-and-input.md` §3（运行时无 continue API，窗口语义 ≠ 追加同一会话历史） |
-| 自测覆盖五类断言且仓库内可复现 | `test-handler.mjs`（98 断言）+ `test/self-test.mjs`（38 断言，空宿主安全） |
+| 自测覆盖五类断言且仓库内可复现 | `test-handler.mjs`（t6 时 98 断言；**t9 统一为 109**）+ `test/self-test.mjs`（38 断言，空宿主安全） |
 | 所有 JS 过 `--check`、所有 JSON 可解析 | `npm run check`（16/16）+ 上述 verify 命令 |
 | 交付说明 | 本文件 |
 

@@ -148,11 +148,24 @@
    但 `docs/en/` 当时为空。t7 已把根 README 的该处承诺改为如实表述
    （`docs/zh-CN/` 已交付 2 页；`docs/en/` 规划中、尚未交付，t3 负责）；
    **英文文档本身仍未交付**，登记在此，供 t3 关闭。
+8. **`.git` 历史（t9 登记，已处理并复验）**：t1/t7 交付时仓库内**没有** `.git`，因此当时的「不泄漏」只覆盖
+   工作树文本。随后 captain 初始化了 git，并发现旧历史里含**真实微信账号 id**
+   （`scripts/captain-verify-judgment.mjs`）与若干机器路径；captain 已删除 `.git` 重建为单提交
+   `c4878b5`（工作树本身也已去敏感化：该脚本已移除、机器值移入 gitignored `config/*.local.*`）。
+   t9 用 `npm run check:hygiene`（`scripts/scan-repo-hygiene.mjs`，把 `.git/objects` 全量解压后扫描）
+   复验：**真实账号 id / 机器用户路径 0 命中**（只剩 `user-placeholder@im.wechat` 这类占位符），
+   `git log --all -p` 中 `f19bd…` 与 `C:\Users\<用户名>` 形式均 0 命中。
+   仍未做：带签名的发布/归档校验（`git archive` + 校验和）不在本轮范围。
 
-> 计数口径（t7 校订）：本文件 §4 现有 **7** 条；t1 汇报文本里曾写「8 项未验证/待决策」，
-> 实际文件当时只有 6 条，现已按实际条数统一并在本节说明差异。
+> 计数口径（t9 更新）：本文件 §4 现有 **8** 条（t1 时 6 条 → t7 增 1 → t9 增 1）。
+> t1 汇报文本里曾写「8 项未验证/待决策」而当时文件只有 6 条，属表述不一致；现在文件确实为 8 条，
+> 且本节说明了每一批的增补来源。
 >
-> **条数与 t7 后续变化（t7 校订，避免读者拿旧数字对不上）**：`test/self-test.mjs` 由 79 → **38**
-> （t6 重写为包契约+discovery+空宿主安全）；新增 `test-handler.mjs` 为 **101**（t6）→ **104**（t7 增补 3 条
-> sender-identity 回归断言）；`verify-clone-fix.mjs` 为 56（`--no-real` 时 52）；`apply-gate-test.ps1` 为 27。
-> t7 的完整修订记录见同目录 `DELIVERY-t7.md`（该文件不在本任务 In-scope 声明里，故未列入 changedPaths）。
+> **条数与 t7/t9 后续变化**：`test/self-test.mjs` 由 79 → **38**（t6 重写为包契约+discovery+空宿主安全）；
+> `test-handler.mjs` 101（t6）→ 104（t7）→ **109**（t9：新增 judgment=off 下的自回环断言、
+> hook 侧不再解析 `DSH_BRIDGE_MIN_INTERVAL_MS` 的断言，并把一条恒真断言换成真实注入检查）；
+> `verify-clone-fix.mjs` 为 56（`--no-real` 时 52）；`apply-gate-test.ps1` 为 27；
+> `check-syntax` 文件数 16（t6）→ 17（t7，含 captain 的验证脚本）→ **17**（t9：captain 的
+> `scripts/captain-verify-judgment.mjs` 已随历史卫生移除 −1，新增 `scripts/scan-repo-hygiene.mjs` +1）。
+> t7/t9 的完整修订记录见同目录 `DELIVERY-t7.md` / `DELIVERY-t9.md`
+> （这两个文件不在本任务 In-scope 声明里，故未列入 changedPaths）。

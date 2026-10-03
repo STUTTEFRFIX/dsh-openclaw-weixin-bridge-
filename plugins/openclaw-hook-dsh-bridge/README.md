@@ -1,16 +1,38 @@
 # openclaw-hook-dsh-bridge
 
-OpenClaw 侧的可安装 **hook pack**：订阅 `message:received`，把微信通道的入站正文
-POST 给 DSH 的 webhook 桥接端点（本仓库另一个包 `plugins/dsh-webhook-bridge`），
-由 DSH 创建新会话处理。方向：**微信 → DSH**。
+OpenClaw 侧的可安装 **hook pack**：订阅 `message:received`（入站）与 `message:sent`（出站，用于自回环标记环），
+把**确实需要 DSH 本地能力**的微信入站正文按判断规则 POST 给 DSH 的 webhook 桥接端点
+（本仓库另一个包 `plugins/dsh-webhook-bridge`），由 DSH 创建新会话处理。方向：**微信 → DSH**。
+
+> ⚠️ **默认对闲聊 / 确认 / 追问类短消息「不转发」（`default-skip`）**：这是修掉「每条消息都新建会话」的
+> 保守默认。要让某条消息一定转发用 **`#dsh ` 前缀**；整体放宽用 `DSH_BRIDGE_DEFAULT_DECISION=forward`，
+> 完全关闭内容判断用 `DSH_BRIDGE_JUDGMENT=off`。规则细节见 `docs/zh-CN/hook-judgment.md`。
+
+## 它做什么
+
+1. **判断**（`decideForward`，顺序即优先级）：显式前缀 `#dsh ` → 回复标记 `[dsh]` → 出站标记环 →
+   判断开关 → 闲聊/问候/确认/追问（仅短消息，默认 ≤12 字）→ 能力信号（路径/命令/关键词/多行/长度≥30）
+   → 默认结果（`skip`）。每次判断写 `bridge-forward.log`（`decision=` / `rule=`）。
+2. **同源多段合并**：同一会话在静默窗口（`coalesceMs`，默认 1500ms；硬上限 `coalesceMaxMs=5000ms`）内到达的
+   多段合并成**一次** POST。
+3. **转发**：`POST <DSH_BRIDGE_URL>`，头 `Authorization: Bearer <secret>` +
+   `content-type: application/json`，请求体
+   `{ text, title?, workspacePath?, sender?, conversationId?, fragments?, forwardRule?, wait }`。
+4. **回执**：写 Gateway 日志（`[dsh-bridge] …`）与审计日志；返回值
+   `{ ok, status, state, kind, sessionId, fragments, forwardRule, replyText, optionCount }`，
+   其中 `state` ∈ `completed` / `needs_input` / `aborted` / `error` / `blocked` / `running` / `accepted` / `merged`；
+   `needs_input` 时 `replyText` 是**纯文本编号选项**。
+5. **防自回环**：`message:sent` 的文本进有上限的标记环（`loopWindowMs=180000` / 50 条）；入站命中标记环、
+   以 `[dsh]` 开头、发送者身份命中 `botIds`、或事件标记 `fromMe/isBot/self` → 跳过。
 
 ## 包结构
 
 ```
 package.json        声明 openclaw.hooks: ["."] 与 type: module（都是宿主加载所必需，见下）
-HOOK.md             hook 描述与 metadata（name / metadata.openclaw.events）
+HOOK.md             hook 描述与 metadata（name / metadata.openclaw.events = received + sent）
 handler.js          处理器实现（默认导出 + 具名导出便于自测）
-test/self-test.mjs  仓库内可直接运行的自测（不联网、不需要 openclaw、不读真实配置）
+test-handler.mjs    行为自测：判断 / 前缀 / 自回环 / 合并窗口 / needs_input（条数以脚本输出为准）
+test/self-test.mjs  包契约 + HOOK.md + 宿主 discovery 实测 + 空宿主安全（不联网、不读真实配置）
 ```
 
 包根目录**就是** hook 目录：`HOOK.md` + `handler.js` 都在根上，`openclaw.hooks: ["."]`
@@ -63,11 +85,24 @@ per-hook env（`event.context.cfg.hooks.internal.entries["dsh-bridge"].env`，�
 | `DSH_BRIDGE_SECRET` / `secret` | 是 | — | 与 DSH 侧 `dsh-webhook-bridge` 的 `secretFile`/`secretEnv` 对应的共享密钥 |
 | `DSH_BRIDGE_WORKSPACE` / `workspacePath` | 否 | 空 | 传给 DSH 的工作区路径（必须落在 DSH 的 `workspaceRoot` 内且已存在） |
 | `DSH_BRIDGE_CHANNELS` / `channels` | 否 | `openclaw-weixin` | 允许转发的通道 id（逗号分隔或 JSON 数组） |
-| `DSH_BRIDGE_WAIT` / `wait` | 否 | `false` | 让 DSH 等到本轮结束并回传 `replies` |
-| `DSH_BRIDGE_TIMEOUT_MS` / `timeoutMs` | 否 | `15000` | 单次 POST 超时 |
+| `DSH_BRIDGE_JUDGMENT` / `judgment` | 否 | `on` | `off` = 关闭**内容判断**（回复标记与标记环仍生效） |
+| `DSH_BRIDGE_DEFAULT_DECISION` / `defaultDecision` | 否 | `skip` | 无法判定时：`skip`（不建会话）/ `forward` |
+| `DSH_BRIDGE_FORWARD_PREFIX` / `forwardPrefix` | 否 | `#dsh` | 显式前缀，无视判断直接转发 |
+| `DSH_BRIDGE_REPLY_MARKER` / `replyMarker` | 否 | `[dsh]` | 回复标记（入站命中即跳过） |
+| `DSH_BRIDGE_BOT_IDS` / `botIds` | 否 | 空 | bot/自身的发送者 id 列表（命中即跳过） |
+| `DSH_BRIDGE_LOOP_WINDOW_MS` / `loopWindowMs` | 否 | `180000` | 出站标记环时间窗（毫秒） |
+| `DSH_BRIDGE_COALESCE_MS` / `coalesceMs` | 否 | `1500` | 同源多段合并静默窗口（0 = 关闭合并） |
+| `DSH_BRIDGE_MAX_FRAGMENTS` / `maxFragments` | 否 | `20` | 一次合并最多几段 |
+| `DSH_BRIDGE_MAX_MERGED_CHARS` / `maxMergedChars` | 否 | `8000` | 合并文本字符上限 |
+| `DSH_BRIDGE_WAIT` / `wait` | 否 | **`true`** | 让 DSH 等到本轮结束/需要输入（拿到三态的前提） |
+| `DSH_BRIDGE_TIMEOUT_MS` / `timeoutMs` | 否 | **`130000`** | 单次 POST 超时（须大于 DSH 侧 `waitTimeoutMs`=120000） |
 | `DSH_BRIDGE_INCLUDE_TITLE` / `includeTitle` | 否 | `false` | 用正文派生会话标题 |
 | `DSH_BRIDGE_LOG_BODY` / `logBody` | 否 | `false` | 是否把正文与回复全文写日志（默认只写长度） |
+| `DSH_BRIDGE_FORWARD_LOG` / `forwardLog` | 否 | `<stateDir>/logs/bridge-forward.log` | 判断审计日志路径（空则不写） |
 | `DSH_BRIDGE_HOOK_CONFIG` | 否 | `<OPENCLAW_STATE_DIR 或 ~/.openclaw>/dsh-bridge-hook.json` | 旁挂 JSON 路径 |
+
+> 节流 `minIntervalMs` 与亲和窗口 `affinityWindowMs` 属于 **DSH 侧**插件配置
+> （`plugins/dsh-webhook-bridge/cordis.patch.yml`），hook 侧设置它们不会生效。
 
 ## 验证
 

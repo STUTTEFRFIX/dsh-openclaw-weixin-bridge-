@@ -99,13 +99,26 @@ function makeLogger() {
   };
 }
 
+/**
+ * 注入审计（t9）：记录每次 handleMessage 调用是否真的用上了注入的日志写入器。
+ * 目的不是「再断言一次常量 true」，而是让「忘了注入 appendLog 就会写真实 stateDir」这类回归可被捕获。
+ */
+const PLACEHOLDER_LOG_PATH = "Z:\\placeholder\\bridge-forward.log";
+const RUN_LOG_AUDIT = [];
+const ALL_SINK_LINES = [];
+
 function makeLogSink() {
   const entries = [];
-  return {
+  const sink = {
     entries,
-    appendLog: (filePath, text) => entries.push({ filePath, text: String(text) }),
+    appendLog: (filePath, text) => {
+      const entry = { filePath, text: String(text) };
+      entries.push(entry);
+      ALL_SINK_LINES.push(entry);
+    },
     text: () => entries.map((entry) => entry.text).join(""),
   };
+  return sink;
 }
 
 function makeState() {
@@ -176,11 +189,16 @@ async function run(event, { env = { DSH_BRIDGE_URL: URL_OK, DSH_BRIDGE_SECRET: S
     readFile: missingReadFile,
     logger,
     appendLog: sink.appendLog,
-    forwardLogPath: "Z:\\placeholder\\bridge-forward.log",
+    forwardLogPath: PLACEHOLDER_LOG_PATH,
     now: () => FIXED_NOW,
     sleep: async () => {},
     state,
     ...extra,
+  });
+  RUN_LOG_AUDIT.push({
+    event: `${event?.type ?? "?"}:${event?.action ?? "?"}`,
+    lines: sink.entries.length,
+    offPlaceholderPaths: sink.entries.filter((entry) => entry.filePath !== PLACEHOLDER_LOG_PATH).map((entry) => entry.filePath),
   });
   return { result, logger, sink, calls };
 }
@@ -246,6 +264,38 @@ check(
   "judgment=off 时关闭判断（回到旧行为）",
   decideForward({ text: "你好", judgment: "off", defaultDecision: "skip", forwardPrefix: "#dsh", echoRing: new EchoRing(), now: FIXED_NOW }).rule === RULES.DEFAULT_FORWARD,
 );
+{
+  // t9：自回环过滤必须**先于** judgment 开关（文档称「只剩自回环过滤」必须成立）
+  const ring = new EchoRing();
+  ring.record("已定位，三类缺陷都成立，稍后我把补丁贴给你", FIXED_NOW);
+  const markerWhenOff = decideForward({ text: "[dsh] 回传内容", judgment: "off", defaultDecision: "skip", forwardPrefix: "#dsh", echoRing: new EchoRing(), now: FIXED_NOW });
+  const echoWhenOff = decideForward({
+    text: "已定位，三类缺陷都成立，稍后我把补丁贴给你",
+    judgment: "off",
+    defaultDecision: "skip",
+    forwardPrefix: "#dsh",
+    echoRing: ring,
+    now: FIXED_NOW,
+  });
+  check("judgment=off 时回复标记仍拦截（self-loop-marker）", markerWhenOff.decision === DECISION.SKIP && markerWhenOff.rule === RULES.SELF_LOOP_MARKER, JSON.stringify(markerWhenOff));
+  check("judgment=off 时出站标记环仍拦截（self-loop-echo）", echoWhenOff.decision === DECISION.SKIP && echoWhenOff.rule === RULES.SELF_LOOP_ECHO, JSON.stringify(echoWhenOff));
+  check(
+    "judgment=off 时普通闲聊仍按关闭语义转发（证明关的是内容判断）",
+    decideForward({ text: "你好", judgment: "off", defaultDecision: "skip", forwardPrefix: "#dsh", echoRing: ring, now: FIXED_NOW }).rule === RULES.DEFAULT_FORWARD,
+  );
+}
+{
+  // t9：hook 侧不再解析 DSH_BRIDGE_MIN_INTERVAL_MS（真正生效的节流在 DSH 侧 minIntervalMs）
+  const resolved = resolveConfig(receivedEvent(), {
+    env: { DSH_BRIDGE_MIN_INTERVAL_MS: "12345", DSH_BRIDGE_COALESCE_MS: "0" },
+    readFile: missingReadFile,
+  });
+  check(
+    "DSH_BRIDGE_MIN_INTERVAL_MS 在 hook 侧不再生效（不落入配置）",
+    resolved.config.minIntervalMs === undefined && !Object.hasOwn(resolved.config, "minIntervalMs"),
+    JSON.stringify({ minIntervalMs: resolved.config.minIntervalMs, has: Object.hasOwn(resolved.config, "minIntervalMs") }),
+  );
+}
 
 // ── 2. 显式覆盖前缀 ────────────────────────────────────────────────────────
 group("2. 显式前缀应无视判断直接转发");
@@ -603,7 +653,20 @@ group("7. 真实磁盘守卫");
     `before=${JSON.stringify(REAL_LOG_GUARD)} after=${JSON.stringify(after)}`,
   );
   check("默认审计日志路径确实位于 stateDir 下（默认值符合设计）", /[\\/]\.openclaw[\\/]logs[\\/]bridge-forward\.log$/i.test(REAL_LOG_GUARD.path) || REAL_LOG_GUARD.path.includes("logs"), REAL_LOG_GUARD.path);
-  check("所有测试调用都注入了日志写入器（否则上面的守卫会失败）", true);
+  // t9：把原先恒真的那条断言换成对**实际注入行为**的检查——
+  // 每次 run() 都必须把写入器注入进去，且 handler 必须真的写入（否则那次调用会落到真实 stateDir）。
+  const runsWithoutWrites = RUN_LOG_AUDIT.filter((entry) => entry.lines === 0);
+  const runsWritingElsewhere = RUN_LOG_AUDIT.filter((entry) => entry.offPlaceholderPaths.length > 0);
+  check(
+    "每次 handleMessage 调用都通过注入的写入器至少写了 1 行审计（无调用漏注入 appendLog）",
+    RUN_LOG_AUDIT.length >= 15 && runsWithoutWrites.length === 0,
+    `runs=${RUN_LOG_AUDIT.length} zeroWriteRuns=${JSON.stringify(runsWithoutWrites.slice(0, 3))}`,
+  );
+  check(
+    "所有 run() 的审计写入都落在注入的占位路径上（没有任何一次写真实 stateDir）",
+    runsWritingElsewhere.length === 0,
+    JSON.stringify(runsWritingElsewhere.slice(0, 3)),
+  );
 }
 
 // ── 汇总 ───────────────────────────────────────────────────────────────────

@@ -9,7 +9,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "check": "node scripts/check-syntax.mjs && node scripts/check-config-samples.mjs",
+    "check": "node scripts/check-syntax.mjs && node scripts/check-config-samples.mjs && node scripts/scan-repo-hygiene.mjs --quiet-placeholders",
+    "check:hygiene": "node scripts/scan-repo-hygiene.mjs",
     "test:hook": "node plugins/openclaw-hook-dsh-bridge/test/self-test.mjs",
     "test:hook-handler": "node plugins/openclaw-hook-dsh-bridge/test-handler.mjs",
     "test:fix": "node packages/openclaw-weixin-runtime-fix/test/verify-clone-fix.mjs",
