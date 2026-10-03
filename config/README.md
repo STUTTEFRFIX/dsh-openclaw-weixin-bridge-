@@ -9,6 +9,9 @@
 | `dsh-webhook-bridge.patch.local.yml` | **本机真实值**（密钥文件绝对路径、本机工作区根）。被 `.gitignore` 的 `config/*.local.*` 排除，**不会**进版本库 | 仅本机保留；部署时把这些值覆盖进 `<profile>/node_modules/dsh-webhook-bridge/cordis.patch.yml`（运行时生效的是 profile 内那一份） |
 | `openclaw-hooks.sample.json` | **OpenClaw 侧**：启用 `dsh-bridge` hook 的 `hooks.internal.entries` 片段 | 合并进 `openclaw.json` |
 | `dsh-bridge-hook.sample.json` | **OpenClaw 侧**：hook 的旁挂配置文件（含共享密钥），`message:received` 事件下最可靠的配置来源 | 复制到仓库外，例如 `<stateDir>/dsh-bridge-hook.json`，并设置最小文件权限 |
+| `deploy-extraDirs.patch.json5` | **OpenClaw 侧**：把 `hooks.internal.load.extraDirs` 指向**仓库内**的 hook pack（部署口径 b：git 追踪的那份就是实际加载的那份）。只含占位符 `<repo>` | 合并进 `<stateDir>/openclaw.json` 后重启 Gateway；本机真实路径放 `deploy-extraDirs.patch.local.json5`（gitignored） |
+| `deploy-extraDirs.patch.local.json5` | **本机真实值**：上一项的绝对路径。被 `.gitignore` 的 `config/*.local.*` 排除，**不会**进版本库 | 仅本机保留 |
+| `stopgap-disable-hook.patch.json5` | **OpenClaw 侧（止血）**：显式登记并关闭新版 hook（`entries["dsh-bridge"].enabled = false`）。背景：`extraDirs` 存在时宿主为开放式发现，旧条目 `dsh-bridge-forward` 约束不到新 hook 名 | 合并进 `<stateDir>/openclaw.json`；确认止血后按需撤销该条 |
 
 > **机器相关值一律不进受版本控制的文件**：模板只留占位符；本机真实值放 `*.local.*`（已 gitignore）或环境变量。
 > 按适用侧区分（别混用）：

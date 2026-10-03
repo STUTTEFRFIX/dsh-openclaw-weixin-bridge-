@@ -1,0 +1,47 @@
+dsh-openclaw-weixin-bridge
+Copyright (c) 2026 STUTTEFRFIX
+
+This product is licensed under the MIT License (see LICENSE). The MIT License
+already permits commercial use, modification, and redistribution.
+
+------------------------------------------------------------------------------
+ADDITIONAL PROJECT CONVENTION — MODIFICATION NOTICE (not a license condition)
+------------------------------------------------------------------------------
+
+The maintainer of this project additionally asks — as a matter of project
+etiquette and traceability, NOT as an extra legal condition of the MIT License —
+that anyone who publishes a modified version of this software:
+
+  1. clearly states that it is a modified version, and
+  2. indicates which parts were changed, added, or removed.
+
+A short "Modifications" section in your README, or a MODIFICATIONS.md file next
+to the license, is enough. If you distribute binaries or installers, mention it
+in the release notes as well.
+
+Because this request is not part of the MIT License, failing to follow it does
+not terminate your MIT rights. It is a request, and following it is appreciated.
+
+------------------------------------------------------------------------------
+THIRD-PARTY COMPONENTS
+------------------------------------------------------------------------------
+
+This project integrates with, but does not bundle, the following:
+
+  * OpenClaw (https://github.com/openclaw/openclaw) — the host whose internal
+    hook API and `openclaw` CLI are used by plugins/openclaw-hook-dsh-bridge.
+  * DeepSeek Harness / DSH (https://github.com/deepseek-ai/deepseek-harness) —
+    the host whose Cordis plugin API is used by plugins/dsh-webhook-bridge.
+  * @tencent-weixin/openclaw-weixin — the WeChat channel plugin for OpenClaw.
+
+Each third-party component keeps its own license and copyright. Consult those
+projects before redistributing anything that links against them.
+
+------------------------------------------------------------------------------
+DISCLAIMER
+------------------------------------------------------------------------------
+
+This project is in a TESTING stage. It includes an unsupported local patch to
+OpenClaw internals (packages/openclaw-weixin-runtime-fix) which is lost on every
+OpenClaw upgrade. See STATUS.md and docs/*/known-issues.md before deploying.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

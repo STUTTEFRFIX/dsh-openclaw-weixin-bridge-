@@ -87,6 +87,7 @@ webhook 桥接端点；DSH 收到后创建一个新会话，并把这段文本�
 | `DSH_BRIDGE_LOG_BODY` / `logBody` | 否 | `false` | 是否把消息正文与 DSH 回复全文写进日志（默认只写长度）。 |
 | `DSH_BRIDGE_FORWARD_LOG` / `forwardLog` | 否 | `<stateDir>/logs/bridge-forward.log` | 判断审计日志路径（留空则不写）。 |
 | `DSH_BRIDGE_HOOK_CONFIG` | 否 | 见上 | 旁挂 JSON 的路径。 |
+| `DSH_BRIDGE_ECHO_BACK` / `echoBack` | 否 | `false` | **预留：结果回传开关（尚未消费）**——handler 已解析该键，但当前**没有任何代码读取它**，设了不产生任何行为。它将是「在标记环保护下把 DSH 结果回传微信」功能的开关（用户已批准实现，尚未落地）。在实现前请勿依赖此键。 |
 
 > 节流间隔 `minIntervalMs` 与亲和窗口 `affinityWindowMs` **不是 hook 侧配置**，
 > 它们属于 DSH 桥接插件（见 `plugins/dsh-webhook-bridge/cordis.patch.yml`）。

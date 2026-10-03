@@ -1,8 +1,9 @@
 # dsh-webhook-bridge
 
 DSH（DeepSeek Harness）侧的 Cordis 插件：注册一个**受共享密钥保护的精确 POST 路由**，
-每收到一个请求就通过 DSH 官方的 webhook 运行时（`ctx.webhookRuntime`）**创建一个新的
-Workspace 会话**，并把请求里的文本作为 prompt 投递进去；可选同步等待本轮结束并回传回复正文。
+默认**每个请求创建一个新的 Workspace 会话**并把请求里的文本作为 prompt 投递进去；
+同一会话在亲和窗口内、且距上次派发超过 `minIntervalMs` 的后续请求会**并入同一次派发**
+（`status: "merged"`，见下文「会话亲和」），而不是无脑再建一个会话。可选同步等待本轮结束并回传回复正文。
 
 用途：`OpenClaw（微信通道）→ HTTP POST → 本路由 → DSH 新会话`。
 

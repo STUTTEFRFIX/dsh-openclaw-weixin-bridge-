@@ -100,6 +100,7 @@ per-hook env（`event.context.cfg.hooks.internal.entries["dsh-bridge"].env`，�
 | `DSH_BRIDGE_LOG_BODY` / `logBody` | 否 | `false` | 是否把正文与回复全文写日志（默认只写长度） |
 | `DSH_BRIDGE_FORWARD_LOG` / `forwardLog` | 否 | `<stateDir>/logs/bridge-forward.log` | 判断审计日志路径（空则不写） |
 | `DSH_BRIDGE_HOOK_CONFIG` | 否 | `<OPENCLAW_STATE_DIR 或 ~/.openclaw>/dsh-bridge-hook.json` | 旁挂 JSON 路径 |
+| `DSH_BRIDGE_ECHO_BACK` / `echoBack` | 否 | `false` | **预留：结果回传开关（尚未消费）**——已解析、当前无任何代码读取，设了无效果；将作为「标记环保护下回传 DSH 结果到微信」的开关（尚待实现） |
 
 > 节流 `minIntervalMs` 与亲和窗口 `affinityWindowMs` 属于 **DSH 侧**插件配置
 > （`plugins/dsh-webhook-bridge/cordis.patch.yml`），hook 侧设置它们不会生效。

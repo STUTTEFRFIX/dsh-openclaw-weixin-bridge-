@@ -85,7 +85,12 @@ const JUDGMENT_CONFIG = Object.freeze({
   includeTitle: false,
   /** 是否把正文/回复全文写日志（默认只写长度）。 */
   logBody: false,
-  /** 本 hook 是否负责把结果发回微信（本包默认 false：回传由部署方决定，见 README）。 */
+  /**
+   * 结果回传开关（`DSH_BRIDGE_ECHO_BACK` / `echoBack`）。
+   * **预留：已解析但尚未消费**——当前代码只把它读进配置，不做任何出站发送。
+   * 它将用于「在自回环标记环保护下，把 DSH 的结果/needs_input 选项发回微信」；
+   * 在实现落地前，设置它不会有任何行为（文档也如此标注）。
+   */
   echoBack: false,
   /** 无法判定时的默认结果：skip（保守，推荐）| forward。 */
   defaultDecision: "skip",
